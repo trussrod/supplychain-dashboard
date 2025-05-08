@@ -4,7 +4,7 @@ from supabase import create_client, Client
 
 # --- SETUP SUPABASE (FREE CLOUD DATABASE) --- #
 url = "https://bznvxydkjonkqzzkidqf.supabase.co"  # Replace in Step 4
-key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ6bnZ4eWRram9ua3F6emtpZHFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3MzgxNjEsImV4cCI6MjA2MjMxNDE2MX0.6W4SutQW4uh5a_4GLmV04rjv87VD5Mj7WuBPm8XtVIQ"  # Replace in Step 4
+key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ6bnZ4eWRram9ua3F6emtpZHFmIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0NjczODE2MSwiZXhwIjoyMDYyMzE0MTYxfQ.btkO0mQxsrU0S90esFTpAfGJjNpyLgv-5Eb_DMBrcVI"  # Replace in Step 4
 supabase = create_client(url, key)
 
 # --- CALCULATE KPIs --- #
