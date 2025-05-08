@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 from supabase import create_client
-from datetime import datetime
+from datetime import datetime, timezone
 
 # --- Page Config ---
 st.set_page_config(
@@ -204,7 +204,7 @@ if uploaded_file:
                 supabase.table("kpi_results").insert({
                     "on_time_rate": float(kpis["on_time_rate"]),
                     "inventory_turnover": float(kpis["inventory_turnover"]),
-                    "timestamp": str(datetime.now())
+                    "timestamp": datetime.now(timezone.utc).isoformat()  # ISO format with timezone
                 }).execute()
             except Exception as e:
                 st.warning(f"⚠️ Could not save to database: {str(e)}")
