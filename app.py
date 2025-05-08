@@ -15,18 +15,33 @@ st.set_page_config(
 # --- Theme CSS ---
 st.markdown("""
 <style>
-    .stApp { background-color: #f8f9fa; }
-    .stMetric { 
-        background-color: white; 
-        border-radius: 8px; 
-        padding: 15px; 
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+    :root {
+        --primary-color: #2a3f5f;
+        --background-color: #f8f9fa;
+        --secondary-background-color: white;
+        --text-color: #31333F;
+        --border-color: #e0e0e0;
     }
-    h1 { 
-        color: #2a3f5f; 
-        border-bottom: 2px solid #2a3f5f; 
-        padding-bottom: 10px; 
+    
+    .stApp {
+        background-color: var(--background-color);
+        color: var(--text-color);
     }
+    
+    .stMetric {
+        background-color: var(--secondary-background-color);
+        border-radius: 8px;
+        padding: 15px;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    h1 {
+        color: var(--primary-color);
+        border-bottom: 2px solid var(--primary-color);
+        padding-bottom: 10px;
+    }
+    
     .footer {
         position: fixed;
         left: 0;
@@ -34,27 +49,50 @@ st.markdown("""
         width: 100%;
         text-align: center;
         padding: 10px;
-        background-color: white;
-        border-top: 1px solid #e0e0e0;
+        background-color: var(--secondary-background-color);
+        border-top: 1px solid var(--border-color);
+        z-index: 100;
+    }
+    
+    .stFileUploader > div {
+        background-color: var(--secondary-background-color) !important;
+        border-color: var(--border-color) !important;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --background-color: #0e1117;
+            --secondary-background-color: #262730;
+            --text-color: #FAFAFA;
+            --border-color: #444;
+        }
     }
 </style>
 """, unsafe_allow_html=True)
 
-# --- Supabase Setup ---
+# --- Supabase Setup (Fixed Initialization) ---
 @st.cache_resource
 def init_supabase():
     url = st.secrets["SUPABASE_URL"]
     key = st.secrets["SUPABASE_KEY"]
-    return create_client(url, key)
+    return create_client(
+        supabase_url=url,
+        supabase_key=key,
+        options={
+            'auto_refresh_token': True,
+            'persist_session': True
+        }
+    )
 
 supabase = init_supabase()
 
 # --- Header ---
-st.title("Supply Chain Analytics Dashboard")
-st.caption("Powered by Python + Supabase")
+st.title("📊 Supply Chain Analytics Dashboard")
+st.caption("Upload your supply chain data to visualize KPIs")
 
 # --- Data Processing Functions ---
 def generate_template():
+    """Generate a valid CSV template with realistic data"""
     dates = pd.date_range("2024-01-01", periods=10)
     delivery_dates = dates + pd.to_timedelta(np.random.randint(2, 10, 10), unit='d')
     promised_dates = dates + pd.to_timedelta(np.random.randint(1, 8, 10), unit='d')
@@ -68,6 +106,7 @@ def generate_template():
     })
 
 def validate_csv(df):
+    """Validate uploaded CSV structure"""
     required_columns = {
         "Order_Date": "datetime64[ns]",
         "Delivery_Date": "datetime64[ns]",
@@ -94,6 +133,7 @@ def validate_csv(df):
     return errors
 
 def calculate_kpis(df):
+    """Calculate core supply chain metrics"""
     try:
         df['Order_Date'] = pd.to_datetime(df['Order_Date'])
         df['Delivery_Date'] = pd.to_datetime(df['Delivery_Date'])
@@ -106,7 +146,8 @@ def calculate_kpis(df):
         return {
             "on_time_rate": on_time_rate,
             "inventory_turnover": inventory_turnover,
-            "error": None
+            "error": None,
+            "df": df  # Return processed dataframe for visualizations
         }
     except Exception as e:
         return {"error": str(e)}
@@ -116,22 +157,23 @@ with st.expander("📌 How to use this dashboard", expanded=True):
     st.markdown("""
     1. **Download the template**  
     2. Fill it with your supply chain data  
-    3. Upload the CSV to see KPIs  
+    3. Upload the CSV to analyze performance  
     """)
 
 col1, col2 = st.columns(2)
 with col1:
-    uploaded_file = st.file_uploader("Upload your CSV file", type="csv")
+    uploaded_file = st.file_uploader("Upload CSV file", type="csv", key="file_uploader")
 with col2:
-    st.download_button(
-        label="Download CSV Template",
+    if st.download_button(
+        label="Download Template",
         data=generate_template().to_csv(index=False),
         file_name="supply_chain_template.csv",
         mime="text/csv",
         help="Guaranteed correct format"
-    )
+    ):
+        st.toast("Template downloaded!", icon="✅")
 
-# --- Main Dashboard ---
+# --- Main Dashboard Logic ---
 if uploaded_file:
     df = pd.read_csv(uploaded_file)
     validation_errors = validate_csv(df)
@@ -140,6 +182,7 @@ if uploaded_file:
         st.error("❌ Invalid CSV format. Please fix these issues:")
         for error in validation_errors:
             st.write(f"- {error}")
+        st.markdown("**Tip:** Use the template to avoid errors.")
     else:
         kpis = calculate_kpis(df)
         
@@ -147,42 +190,56 @@ if uploaded_file:
             st.error(f"Calculation error: {kpis['error']}")
         else:
             st.success("✅ Data processed successfully!")
+            processed_df = kpis["df"]
             
-            # --- KPI Cards ---
-            tab1, tab2, tab3 = st.tabs(["Dashboard", "Shipping Lanes", "Raw Data"])
+            # --- Tab Layout ---
+            tab1, tab2, tab3 = st.tabs(["📈 KPIs", "🚢 Shipping Lanes", "📋 Raw Data"])
             
             with tab1:
+                # --- KPI Cards ---
                 col1, col2 = st.columns(2)
                 with col1:
-                    st.metric("On-Time Delivery Rate", 
-                             f"{kpis['on_time_rate']:.1%}",
-                             help="Percentage of orders delivered by promised date")
+                    st.metric(
+                        "On-Time Delivery Rate", 
+                        f"{kpis['on_time_rate']:.1%}",
+                        help="Percentage of orders delivered by promised date"
+                    )
                 with col2:
-                    st.metric("Inventory Turnover", 
-                             round(kpis['inventory_turnover'], 2),
-                             help="Sales / Average Inventory")
+                    st.metric(
+                        "Inventory Turnover", 
+                        f"{kpis['inventory_turnover']:.2f}",
+                        help="Sales / Average Inventory"
+                    )
+                
+                # --- Trend Analysis ---
+                st.markdown("### Weekly Performance")
+                weekly_data = processed_df.set_index('Order_Date').resample('W').agg({
+                    'On_Time': 'mean',
+                    'Sales': 'sum'
+                }).reset_index()
+                
+                fig = px.line(
+                    weekly_data,
+                    x='Order_Date',
+                    y=['On_Time', 'Sales'],
+                    labels={'value': 'Metric', 'variable': ''},
+                    height=400
+                )
+                fig.update_yaxes(tickformat=".0%", secondary_y=False)
+                st.plotly_chart(fig, use_container_width=True)
             
-            # --- NEW: Sankey Diagram ---
             with tab2:
+                # --- Sankey Diagram ---
                 st.markdown("### Shipping Lane Performance")
                 
-                # Create mock lanes (replace with real 'Origin'/'Destination' if available)
-                df['Lane'] = "Lane_" + (df.groupby(['Order_Date']).cumcount() % 3 + 1).astype(str)
+                # Create mock lanes (replace with real columns if available)
+                processed_df['Lane'] = "Lane_" + (processed_df.groupby(['Order_Date']).cumcount() % 3 + 1).astype(str)
+                lane_perf = processed_df.groupby(['Lane', 'On_Time']).size().reset_index(name='Count')
                 
-                # Group data
-                lane_perf = df.groupby(['Lane', 'On_Time']).size().reset_index(name='Count')
-                
-                # Prepare nodes (lanes + statuses)
+                # Prepare nodes
                 all_nodes = list(lane_perf['Lane'].unique()) + ['On Time', 'Delayed']
                 source = [all_nodes.index(x) for x in lane_perf['Lane']]
                 target = [all_nodes.index('On Time' if x else 'Delayed') for x in lane_perf['On_Time']]
-                value = lane_perf['Count']
-                
-                # Color coding
-                node_colors = ["#4CAF50" if "Lane" in x else "#FFC107" if x == "On Time" else "#F44336" 
-                              for x in all_nodes]
-                link_colors = ["rgba(76, 175, 80, 0.3)" if x else "rgba(244, 67, 54, 0.3)" 
-                              for x in lane_perf['On_Time']]
                 
                 # Build diagram
                 fig = go.Figure(go.Sankey(
@@ -191,13 +248,15 @@ if uploaded_file:
                         thickness=20,
                         line=dict(color="black", width=0.5),
                         label=all_nodes,
-                        color=node_colors
+                        color=["#4CAF50" if "Lane" in x else "#FFC107" if x == "On Time" else "#F44336" 
+                               for x in all_nodes]
                     ),
                     link=dict(
                         source=source,
                         target=target,
-                        value=value,
-                        color=link_colors
+                        value=lane_perf['Count'],
+                        color=["rgba(76, 175, 80, 0.3)" if x else "rgba(244, 67, 54, 0.3)" 
+                               for x in lane_perf['On_Time']]
                     )
                 ))
                 
@@ -207,12 +266,17 @@ if uploaded_file:
                 )
                 
                 st.plotly_chart(fig, use_container_width=True)
-                st.caption("💡 Shows distribution of on-time vs delayed deliveries per shipping lane")
+                st.caption("💡 Visualizes delivery performance across different shipping routes")
             
             with tab3:
-                st.dataframe(df.head(1000))
+                # --- Data Preview ---
+                st.dataframe(
+                    processed_df.head(1000),
+                    height=600,
+                    use_container_width=True
+                )
             
-            # --- Database Save ---
+            # --- Database Storage ---
             try:
                 supabase.table("kpi_results").insert({
                     "on_time_rate": float(kpis["on_time_rate"]),
