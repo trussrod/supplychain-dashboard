@@ -156,12 +156,28 @@ col1, col2 = st.columns(2)
 with col1:
     uploaded_file = st.file_uploader("Upload your CSV file", type="csv")
 with col2:
+    # Improved template generator
+    def generate_template():
+        dates = pd.date_range("2024-01-01", periods=10)
+        delivery_dates = dates + pd.to_timedelta(np.random.randint(2, 10, 10), unit='d')
+        promised_dates = dates + pd.to_timedelta(np.random.randint(1, 8, 10), unit='d')
+        
+        return pd.DataFrame({
+            "Order_Date": dates.strftime("%Y-%m-%d"),
+            "Delivery_Date": delivery_dates.strftime("%Y-%m-%d"),
+            "Promised_Delivery_Date": promised_dates.strftime("%Y-%m-%d"),
+            "Sales": np.random.randint(500, 5000, 10),
+            "Average_Inventory": np.random.randint(200, 1000, 10),
+            # Optional: Include timestamp column if needed
+            "timestamp": pd.to_datetime(dates).strftime("%Y-%m-%d %H:%M:%S%z")
+        })
+    
     st.download_button(
         label="Download CSV Template",
         data=generate_template().to_csv(index=False),
         file_name="supply_chain_template.csv",
         mime="text/csv",
-        help="Guaranteed correct format"
+        help="Includes all required columns with sample data"
     )
 
 # --- Process Uploaded File ---
