@@ -19,14 +19,21 @@ st.set_page_config(
     page_icon="🚚",
     layout="wide"
 )
-
+st.markdown("""<style>...</style>""", unsafe_allow_html=True)  # ← Add here
 # --- Custom CSS --- #
 st.markdown("""
 <style>
-    .stApp { background-color: #f8f9fa; }
-    .stMetric { background-color: white; border-radius: 8px; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    h1 { color: #2a3f5f; border-bottom: 2px solid #2a3f5f; padding-bottom: 10px; }
-    .stDownloadButton button { width: 100%; justify-content: center; }
+    /* Force light theme for file uploader */
+    .stFileUploader label {
+        color: black !important;
+    }
+    .stFileUploader div[data-baseweb="file-uploader"] {
+        background-color: white !important;
+        border-color: #ccc !important;
+    }
+    .stFileUploader div[data-baseweb="file-uploader"] span {
+        color: black !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
