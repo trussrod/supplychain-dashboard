@@ -81,7 +81,7 @@ supabase = init_supabase()
 
 # --- Header ---
 st.title("Supply Chain Analytics Dashboard")
-st.caption("Powered by Python + Supabase")
+st.caption("Powered by Python + Supabase, by Sigi Castro")
 
 # --- Generate CSV Template ---
 def generate_template():
