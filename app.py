@@ -3,26 +3,23 @@ import pandas as pd
 import numpy as np
 from supabase import create_client
 from datetime import datetime
-import os
 
-# --- MUST BE FIRST: Page Config --- #
+# --- Page Config ---
 st.set_page_config(
     page_title="SupplyChain Pro | Analytics Dashboard",
     page_icon="🚚",
     layout="wide"
 )
 
-# --- Theme Fixes (Dark Mode Compatibility) --- #
 # --- Theme Configuration ---
 st.markdown("""
 <style>
-    /* Base styles that work in both light/dark modes */
+    /* Base styles */
     .stApp {
         background-color: var(--background-color);
         color: var(--text-color);
     }
     
-    /* Custom component styling */
     .stMetric {
         background-color: var(--secondary-background-color);
         border-radius: 8px;
@@ -36,17 +33,22 @@ st.markdown("""
         padding-bottom: 10px;
     }
     
-    /* File uploader styling */
+    .footer {
+        position: fixed;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        text-align: center;
+        padding: 10px;
+        background-color: var(--secondary-background-color);
+        border-top: 1px solid var(--border-color);
+    }
+    
     .stFileUploader > div {
         background-color: var(--secondary-background-color) !important;
         border-color: var(--border-color) !important;
     }
     
-    .stFileUploader label {
-        color: var(--text-color) !important;
-    }
-    
-    /* Custom color variables */
     :root {
         --primary-color: #2a3f5f;
         --background-color: #f8f9fa;
@@ -56,7 +58,6 @@ st.markdown("""
         --border-color: #e0e0e0;
     }
     
-    /* Dark mode overrides */
     @media (prefers-color-scheme: dark) {
         :root {
             --background-color: #0e1117;
@@ -69,7 +70,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- Supabase Setup --- #
+# --- Supabase Setup ---
 @st.cache_resource
 def init_supabase():
     url = st.secrets["SUPABASE_URL"]
@@ -78,15 +79,11 @@ def init_supabase():
 
 supabase = init_supabase()
 
-# --- Header --- #
-col1, col2 = st.columns([1, 4])
-with col1:
-    st.image("https://via.placeholder.com/100x50?text=Your+Logo", width=100)
-with col2:
-    st.title("Supply Chain Analytics Dashboard")
-    st.caption("Powered by Python + Supabase")
+# --- Header ---
+st.title("Supply Chain Analytics Dashboard")
+st.caption("Powered by Python + Supabase")
 
-# --- Generate CSV Template --- #
+# --- Generate CSV Template ---
 def generate_template():
     dates = pd.date_range("2024-01-01", periods=10)
     delivery_dates = dates + pd.to_timedelta(np.random.randint(2, 10, 10), unit='d')
@@ -100,7 +97,7 @@ def generate_template():
         "Average_Inventory": np.random.randint(200, 1000, 10)
     })
 
-# --- CSV Validation --- #
+# --- CSV Validation ---
 def validate_csv(df):
     required_columns = {
         "Order_Date": "datetime64[ns]",
@@ -127,7 +124,7 @@ def validate_csv(df):
     
     return errors
 
-# --- KPI Calculation --- #
+# --- KPI Calculation ---
 def calculate_kpis(df):
     try:
         df['Order_Date'] = pd.to_datetime(df['Order_Date'])
@@ -146,7 +143,7 @@ def calculate_kpis(df):
     except Exception as e:
         return {"error": str(e)}
 
-# --- Main UI --- #
+# --- Main UI ---
 with st.expander("📌 How to use this dashboard", expanded=True):
     st.markdown("""
     1. **Download the template** below  
@@ -154,7 +151,7 @@ with st.expander("📌 How to use this dashboard", expanded=True):
     3. Upload the CSV to see KPIs  
     """)
 
-# --- File Upload + Template --- #
+# --- File Upload + Template ---
 col1, col2 = st.columns(2)
 with col1:
     uploaded_file = st.file_uploader("Upload your CSV file", type="csv")
@@ -167,7 +164,7 @@ with col2:
         help="Guaranteed correct format"
     )
 
-# --- Process Uploaded File --- #
+# --- Process Uploaded File ---
 if uploaded_file:
     df = pd.read_csv(uploaded_file)
     validation_errors = validate_csv(df)
@@ -185,7 +182,7 @@ if uploaded_file:
         else:
             st.success("✅ Data processed successfully!")
             
-            # --- Display KPIs --- #
+            # --- Display KPIs ---
             tab1, tab2 = st.tabs(["Dashboard", "Raw Data"])
             
             with tab1:
@@ -202,7 +199,7 @@ if uploaded_file:
             with tab2:
                 st.dataframe(df.head(1000))
             
-            # --- Save to Database --- #
+            # --- Save to Database ---
             try:
                 supabase.table("kpi_results").insert({
                     "on_time_rate": float(kpis["on_time_rate"]),
@@ -211,3 +208,10 @@ if uploaded_file:
                 }).execute()
             except Exception as e:
                 st.warning(f"⚠️ Could not save to database: {str(e)}")
+
+# --- Portfolio Footer ---
+st.markdown("""
+<div class="footer">
+    <a href="https://github.com/trussrod/datasig.io" target="_blank">View my portfolio</a>
+</div>
+""", unsafe_allow_html=True)
