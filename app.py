@@ -2,25 +2,17 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 from supabase import create_client
-from datetime import datetime, timedelta
+from datetime import datetime
+import os
 
-# --- Supabase Setup --- #
-@st.cache_resource
-def init_supabase():
-    url = st.secrets["SUPABASE_URL"]
-    key = st.secrets["SUPABASE_KEY"]
-    return create_client(url, key)
-
-supabase = init_supabase()
-
-# --- Page Config --- #
+# --- MUST BE FIRST: Page Config --- #
 st.set_page_config(
     page_title="SupplyChain Pro | Analytics Dashboard",
     page_icon="🚚",
     layout="wide"
 )
-st.markdown("""<style>...</style>""", unsafe_allow_html=True)  # ← Add here
-# --- Custom CSS --- #
+
+# --- Theme Fixes (Dark Mode Compatibility) --- #
 st.markdown("""
 <style>
     /* Force light theme for file uploader */
@@ -34,8 +26,23 @@ st.markdown("""
     .stFileUploader div[data-baseweb="file-uploader"] span {
         color: black !important;
     }
+    
+    /* Global styles */
+    .stApp { background-color: #f8f9fa; }
+    .stMetric { background-color: white; border-radius: 8px; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    h1 { color: #2a3f5f; border-bottom: 2px solid #2a3f5f; padding-bottom: 10px; }
+    .stDownloadButton button { width: 100%; justify-content: center; }
 </style>
 """, unsafe_allow_html=True)
+
+# --- Supabase Setup --- #
+@st.cache_resource
+def init_supabase():
+    url = st.secrets["SUPABASE_URL"]
+    key = st.secrets["SUPABASE_KEY"]
+    return create_client(url, key)
+
+supabase = init_supabase()
 
 # --- Header --- #
 col1, col2 = st.columns([1, 4])
@@ -43,7 +50,7 @@ with col1:
     st.image("https://via.placeholder.com/100x50?text=Your+Logo", width=100)
 with col2:
     st.title("Supply Chain Analytics Dashboard")
-    st.caption("Upload your data to calculate KPIs")
+    st.caption("Powered by Python + Supabase")
 
 # --- Generate CSV Template --- #
 def generate_template():
@@ -67,13 +74,10 @@ def validate_csv(df):
     }
     
     errors = []
-    
-    # Check column names
     missing_cols = [col for col in required_columns if col not in df.columns]
     if missing_cols:
         errors.append(f"Missing columns: {', '.join(missing_cols)}")
     
-    # Check data types
     for col, dtype in required_columns.items():
         if col in df.columns:
             if dtype == "datetime64[ns]":
@@ -151,15 +155,15 @@ if uploaded_file:
                 col1, col2 = st.columns(2)
                 with col1:
                     st.metric("On-Time Delivery Rate", 
-                            f"{kpis['on_time_rate']:.1%}",
-                            help="Percentage of orders delivered by promised date")
+                             f"{kpis['on_time_rate']:.1%}",
+                             help="Percentage of orders delivered by promised date")
                 with col2:
                     st.metric("Inventory Turnover", 
-                            round(kpis['inventory_turnover'], 2),
-                            help="Sales / Average Inventory")
+                             round(kpis['inventory_turnover'], 2),
+                             help="Sales / Average Inventory")
             
             with tab2:
-                st.dataframe(df.head(1000))  # Show first 1000 rows
+                st.dataframe(df.head(1000))
             
             # --- Save to Database --- #
             try:
