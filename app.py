@@ -13,25 +13,59 @@ st.set_page_config(
 )
 
 # --- Theme Fixes (Dark Mode Compatibility) --- #
+# --- Theme Configuration ---
 st.markdown("""
 <style>
-    /* Force light theme for file uploader */
-    .stFileUploader label {
-        color: black !important;
-    }
-    .stFileUploader div[data-baseweb="file-uploader"] {
-        background-color: white !important;
-        border-color: #ccc !important;
-    }
-    .stFileUploader div[data-baseweb="file-uploader"] span {
-        color: black !important;
+    /* Base styles that work in both light/dark modes */
+    .stApp {
+        background-color: var(--background-color);
+        color: var(--text-color);
     }
     
-    /* Global styles */
-    .stApp { background-color: #f8f9fa; }
-    .stMetric { background-color: white; border-radius: 8px; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    h1 { color: #2a3f5f; border-bottom: 2px solid #2a3f5f; padding-bottom: 10px; }
-    .stDownloadButton button { width: 100%; justify-content: center; }
+    /* Custom component styling */
+    .stMetric {
+        background-color: var(--secondary-background-color);
+        border-radius: 8px;
+        padding: 15px;
+        border: 1px solid var(--border-color);
+    }
+    
+    h1 {
+        color: var(--heading-color);
+        border-bottom: 2px solid var(--primary-color);
+        padding-bottom: 10px;
+    }
+    
+    /* File uploader styling */
+    .stFileUploader > div {
+        background-color: var(--secondary-background-color) !important;
+        border-color: var(--border-color) !important;
+    }
+    
+    .stFileUploader label {
+        color: var(--text-color) !important;
+    }
+    
+    /* Custom color variables */
+    :root {
+        --primary-color: #2a3f5f;
+        --background-color: #f8f9fa;
+        --secondary-background-color: white;
+        --text-color: #31333F;
+        --heading-color: #2a3f5f;
+        --border-color: #e0e0e0;
+    }
+    
+    /* Dark mode overrides */
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --background-color: #0e1117;
+            --secondary-background-color: #262730;
+            --text-color: #FAFAFA;
+            --heading-color: #FAFAFA;
+            --border-color: #444;
+        }
+    }
 </style>
 """, unsafe_allow_html=True)
 
