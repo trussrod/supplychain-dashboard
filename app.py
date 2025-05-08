@@ -54,11 +54,14 @@ with col2:
 
 # --- Generate CSV Template --- #
 def generate_template():
-    dates = pd.date_range("2024-01-01", periods=10).strftime("%Y-%m-%d")
+    dates = pd.date_range("2024-01-01", periods=10)
+    delivery_dates = dates + pd.to_timedelta(np.random.randint(2, 10, 10), unit='d')
+    promised_dates = dates + pd.to_timedelta(np.random.randint(3, 8, 10), unit='d')
+    
     return pd.DataFrame({
-        "Order_Date": dates,
-        "Delivery_Date": (pd.to_datetime(dates) + pd.to_timedelta(np.random.randint(2, 10, 10), unit='d')).dt.strftime("%Y-%m-%d"),
-        "Promised_Delivery_Date": (pd.to_datetime(dates) + pd.to_timedelta(np.random.randint(3, 8, 10), unit='d')).dt.strftime("%Y-%m-%d"),
+        "Order_Date": dates.strftime("%Y-%m-%d"),
+        "Delivery_Date": delivery_dates.strftime("%Y-%m-%d"),
+        "Promised_Delivery_Date": promised_dates.strftime("%Y-%m-%d"),
         "Sales": np.random.randint(500, 5000, 10),
         "Average_Inventory": np.random.randint(200, 1000, 10)
     })
