@@ -25,6 +25,10 @@ st.markdown("""
         --border-color: #e0e0e0;
     }
     
+    [data-testid="stAppViewContainer"] {
+        background-color: var(--background-color);
+    }
+    
     .stApp {
         background-color: var(--background-color);
         color: var(--text-color);
@@ -44,6 +48,11 @@ st.markdown("""
         padding-bottom: 10px;
     }
     
+    .stFileUploader > div {
+        background-color: var(--secondary-background-color) !important;
+        border-color: var(--border-color) !important;
+    }
+    
     .footer {
         position: fixed;
         left: 0;
@@ -54,6 +63,21 @@ st.markdown("""
         background-color: var(--secondary-background-color);
         border-top: 1px solid var(--border-color);
         z-index: 100;
+    }
+    
+    /* Force dark mode compatibility */
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --background-color: #0e1117;
+            --secondary-background-color: #262730;
+            --text-color: #FAFAFA;
+            --border-color: #444;
+        }
+        
+        /* Fix for Streamlit components */
+        .st-bb, .st-at, .st-ae, .st-af, .st-ag, .st-ah, .st-ai, .st-aj, .st-ak {
+            background-color: var(--background-color) !important;
+        }
     }
 </style>
 """, unsafe_allow_html=True)
