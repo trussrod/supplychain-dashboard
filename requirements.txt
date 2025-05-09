@@ -12,4 +12,4 @@ realtime-py==0.1.3
 
 # Unified Dependencies
 python-dateutil==2.8.2
-httpx=
+httpx
