@@ -4,12 +4,9 @@ pandas==2.0.3
 plotly==5.18.0
 numpy==1.24.3
 
-# Supabase Stack (loosened version ranges)
-supabase>=2.0.0,<3.0.0  # Wider compatible range
-gotrue>=2.0.0,<3.0.0     # Compatible with supabase
-postgrest-py>=0.10.0,<0.11.0
-realtime-py>=0.1.0,<0.2.0
+dataset==1.6.2
+pathlib==1.0.1
 
 # Supporting Packages (flexible versions)
-python-dateutil>=2.8.0
+python-dateutil==2.8.2
 httpx>=0.23.0,<0.25.0  # Fits both supabase and gotrue

@@ -2,10 +2,12 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
-from supabase import create_client
-from datetime import datetime, timezone
+from datetime import datetime
+import sqlite3
+from pathlib import Path
+import dataset  # Simple ORM for SQLite
 
-# --- Page Config (MUST BE FIRST) ---
+# --- Page Config ---
 st.set_page_config(
     page_title="SupplyChain Pro | Analytics Dashboard",
     page_icon="🚚",
@@ -53,52 +55,39 @@ st.markdown("""
         border-top: 1px solid var(--border-color);
         z-index: 100;
     }
-    
-    .stFileUploader > div {
-        background-color: var(--secondary-background-color) !important;
-        border-color: var(--border-color) !important;
-    }
-    
-    @media (prefers-color-scheme: dark) {
-        :root {
-            --background-color: #0e1117;
-            --secondary-background-color: #262730;
-            --text-color: #FAFAFA;
-            --border-color: #444;
-        }
-    }
 </style>
 """, unsafe_allow_html=True)
 
-# --- Supabase Setup (Fixed Initialization) ---
+# --- Database Setup ---
+DB_PATH = Path("supplychain.db")
+
 @st.cache_resource
-def init_supabase():
-    url = st.secrets["SUPABASE_URL"]
-    key = st.secrets["SUPABASE_KEY"]
+def init_db():
+    """Initialize SQLite database with dataset ORM"""
+    db = dataset.connect(f"sqlite:///{DB_PATH}")
     
-    from supabase import create_client
-    return create_client(
-        supabase_url=url,
-        supabase_key=key,
-        options={
-            "auto_refresh_token": True,
-            "persist_session": True,
-            "headers": {
-                "Authorization": f"Bearer {key}",
-                "apikey": key
-            }
-        }
+    # Create table if not exists
+    db.query("""
+    CREATE TABLE IF NOT EXISTS kpi_results (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        on_time_rate REAL,
+        inventory_turnover REAL,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
     )
+    """)
+    return db
 
-supabase = init_supabase()
-
-# --- Header ---
-st.title("📊 Supply Chain Analytics Dashboard")
-st.caption("Upload your supply chain data to visualize KPIs")
+def save_kpis(kpis):
+    """Save KPIs to SQLite database"""
+    db = init_db()
+    db["kpi_results"].insert({
+        "on_time_rate": float(kpis["on_time_rate"]),
+        "inventory_turnover": float(kpis["inventory_turnover"])
+    })
 
 # --- Data Processing Functions ---
 def generate_template():
-    """Generate a valid CSV template with realistic data"""
+    """Generate valid CSV template"""
     dates = pd.date_range("2024-01-01", periods=10)
     delivery_dates = dates + pd.to_timedelta(np.random.randint(2, 10, 10), unit='d')
     promised_dates = dates + pd.to_timedelta(np.random.randint(1, 8, 10), unit='d')
@@ -153,42 +142,43 @@ def calculate_kpis(df):
             "on_time_rate": on_time_rate,
             "inventory_turnover": inventory_turnover,
             "error": None,
-            "df": df  # Return processed dataframe for visualizations
+            "df": df  # Return processed dataframe
         }
     except Exception as e:
         return {"error": str(e)}
 
-# --- File Upload Section ---
-with st.expander("📌 How to use this dashboard", expanded=True):
+# --- UI Components ---
+st.title("📊 Supply Chain Analytics Dashboard")
+st.caption("Now with SQLite database | No more dependency conflicts")
+
+with st.expander("📌 How to use", expanded=True):
     st.markdown("""
-    1. **Download the template**  
-    2. Fill it with your supply chain data  
-    3. Upload the CSV to analyze performance  
+    1. **Download template**  
+    2. Fill with your data  
+    3. Upload CSV to analyze  
     """)
 
 col1, col2 = st.columns(2)
 with col1:
-    uploaded_file = st.file_uploader("Upload CSV file", type="csv", key="file_uploader")
+    uploaded_file = st.file_uploader("Upload CSV", type="csv")
 with col2:
     if st.download_button(
         label="Download Template",
         data=generate_template().to_csv(index=False),
         file_name="supply_chain_template.csv",
-        mime="text/csv",
-        help="Guaranteed correct format"
+        mime="text/csv"
     ):
         st.toast("Template downloaded!", icon="✅")
 
-# --- Main Dashboard Logic ---
+# --- Main Processing ---
 if uploaded_file:
     df = pd.read_csv(uploaded_file)
     validation_errors = validate_csv(df)
     
     if validation_errors:
-        st.error("❌ Invalid CSV format. Please fix these issues:")
+        st.error("❌ Invalid CSV format:")
         for error in validation_errors:
             st.write(f"- {error}")
-        st.markdown("**Tip:** Use the template to avoid errors.")
     else:
         kpis = calculate_kpis(df)
         
@@ -198,17 +188,16 @@ if uploaded_file:
             st.success("✅ Data processed successfully!")
             processed_df = kpis["df"]
             
-            # --- Tab Layout ---
+            # --- Tabs Layout ---
             tab1, tab2, tab3 = st.tabs(["📈 KPIs", "🚢 Shipping Lanes", "📋 Raw Data"])
             
             with tab1:
-                # --- KPI Cards ---
                 col1, col2 = st.columns(2)
                 with col1:
                     st.metric(
                         "On-Time Delivery Rate", 
                         f"{kpis['on_time_rate']:.1%}",
-                        help="Percentage of orders delivered by promised date"
+                        help="Percentage delivered by promised date"
                     )
                 with col2:
                     st.metric(
@@ -217,7 +206,7 @@ if uploaded_file:
                         help="Sales / Average Inventory"
                     )
                 
-                # --- Trend Analysis ---
+                # Weekly Trends
                 st.markdown("### Weekly Performance")
                 weekly_data = processed_df.set_index('Order_Date').resample('W').agg({
                     'On_Time': 'mean',
@@ -228,26 +217,22 @@ if uploaded_file:
                     weekly_data,
                     x='Order_Date',
                     y=['On_Time', 'Sales'],
-                    labels={'value': 'Metric', 'variable': ''},
+                    labels={'value': 'Metric'},
                     height=400
                 )
                 fig.update_yaxes(tickformat=".0%", secondary_y=False)
                 st.plotly_chart(fig, use_container_width=True)
             
             with tab2:
-                # --- Sankey Diagram ---
+                # Sankey Diagram
                 st.markdown("### Shipping Lane Performance")
-                
-                # Create mock lanes (replace with real columns if available)
                 processed_df['Lane'] = "Lane_" + (processed_df.groupby(['Order_Date']).cumcount() % 3 + 1).astype(str)
                 lane_perf = processed_df.groupby(['Lane', 'On_Time']).size().reset_index(name='Count')
                 
-                # Prepare nodes
                 all_nodes = list(lane_perf['Lane'].unique()) + ['On Time', 'Delayed']
                 source = [all_nodes.index(x) for x in lane_perf['Lane']]
                 target = [all_nodes.index('On Time' if x else 'Delayed') for x in lane_perf['On_Time']]
                 
-                # Build diagram
                 fig = go.Figure(go.Sankey(
                     node=dict(
                         pad=15,
@@ -265,32 +250,18 @@ if uploaded_file:
                                for x in lane_perf['On_Time']]
                     )
                 ))
-                
-                fig.update_layout(
-                    height=500,
-                    margin=dict(l=50, r=50, b=50, t=50)
-                )
-                
+                fig.update_layout(height=500, margin=dict(l=50, r=50, b=50, t=50))
                 st.plotly_chart(fig, use_container_width=True)
-                st.caption("💡 Visualizes delivery performance across different shipping routes")
             
             with tab3:
-                # --- Data Preview ---
-                st.dataframe(
-                    processed_df.head(1000),
-                    height=600,
-                    use_container_width=True
-                )
+                st.dataframe(processed_df, height=600, use_container_width=True)
             
-            # --- Database Storage ---
+            # Save to SQLite
             try:
-                supabase.table("kpi_results").insert({
-                    "on_time_rate": float(kpis["on_time_rate"]),
-                    "inventory_turnover": float(kpis["inventory_turnover"]),
-                    "timestamp": datetime.now(timezone.utc).isoformat()
-                }).execute()
+                save_kpis(kpis)
+                st.toast("Data saved to database!", icon="💾")
             except Exception as e:
-                st.warning(f"⚠️ Could not save to database: {str(e)}")
+                st.warning(f"⚠️ Database save failed: {str(e)}")
 
 # --- Footer ---
 st.markdown("""
