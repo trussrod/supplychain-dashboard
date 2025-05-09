@@ -1,11 +1,12 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import plotly.express as px  # This is the missing import
 import plotly.graph_objects as go
 from datetime import datetime
 import sqlite3
 from pathlib import Path
-import dataset  # Simple ORM for SQLite
+import dataset
 
 # --- Page Config ---
 st.set_page_config(
@@ -230,18 +231,18 @@ if uploaded_file:
                         help="Sales / Average Inventory"
                     )
                 
-                # Weekly Trends
+                # Weekly Trends Chart (corrected)
                 st.markdown("### Weekly Performance")
                 weekly_data = processed_df.set_index('Order_Date').resample('W').agg({
                     'On_Time': 'mean',
                     'Sales': 'sum'
                 }).reset_index()
-                
+
                 fig = px.line(
                     weekly_data,
                     x='Order_Date',
                     y=['On_Time', 'Sales'],
-                    labels={'value': 'Metric'},
+                    labels={'value': 'Metric', 'variable': ''},
                     height=400
                 )
                 fig.update_yaxes(tickformat=".0%", secondary_y=False)
