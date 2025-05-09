@@ -76,10 +76,7 @@ def init_supabase():
     url = st.secrets["SUPABASE_URL"]
     key = st.secrets["SUPABASE_KEY"]
     
-    # Correct import and initialization
     from supabase import create_client
-    from supabase.lib.client_options import ClientOptions
-    
     return create_client(
         supabase_url=url,
         supabase_key=key,
