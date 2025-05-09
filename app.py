@@ -75,13 +75,21 @@ st.markdown("""
 def init_supabase():
     url = st.secrets["SUPABASE_URL"]
     key = st.secrets["SUPABASE_KEY"]
+    
+    # Updated client initialization
+    from supabase import create_client, ClientOptions
+    
     return create_client(
         supabase_url=url,
         supabase_key=key,
-        options={
-            'auto_refresh_token': True,
-            'persist_session': True
-        }
+        options=ClientOptions(
+            auto_refresh_token=True,
+            persist_session=True,
+            headers={
+                "Authorization": f"Bearer {key}",
+                "apikey": key
+            }
+        )
     )
 
 supabase = init_supabase()
