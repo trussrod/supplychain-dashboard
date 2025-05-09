@@ -174,7 +174,7 @@ def calculate_kpis(df):
 
 # --- UI Components ---
 st.title("📊 Supply Chain Analytics Dashboard")
-st.caption("Now with SQLite database | No more dependency conflicts")
+st.caption("A cloud-hosted analytics platform that transforms raw supply chain data into actionable insights")
 
 with st.expander("📌 How to use", expanded=True):
     st.markdown("""
