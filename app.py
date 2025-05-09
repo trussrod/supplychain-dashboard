@@ -174,7 +174,7 @@ def calculate_kpis(df):
 
 # --- UI Components ---
 st.title("📊 Supply Chain Analytics Dashboard")
-st.caption("A cloud-hosted analytics platform that transforms raw supply chain data into actionable insights")
+st.caption("A cloud-hosted analytics platform that transforms raw supply chain data into actionable insights by Sigi Castro")
 
 with st.expander("📌 How to use", expanded=True):
     st.markdown("""
