@@ -1,7 +1,7 @@
 ## Supply Chain Analytics Dashboard  
 **Python | Streamlit | Supabase | Plotly**  
 [![Live Demo](https://img.shields.io/badge/Live_Demo-Render-blue)](https://supplychain-kpi.onrender.com) | [![Code](https://img.shields.io/badge/Code-GitHub-black)](https://github.com/trussrod/supplychain-dashboard)  
-
+- 🔗 [Link to the app](https://supplychain-kpi.onrender.com)
 ### Key Features  
 - **Automated KPI Calculation**: Computes on-time delivery rates and inventory turnover from raw CSV data  
 - **Interactive Visualizations**: Sankey diagrams for shipping lanes, Plotly trend charts  
