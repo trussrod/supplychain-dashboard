@@ -1,15 +1,15 @@
-# Core Application Packages
+# Core Application (pinned stable versions)
 streamlit==1.28.0
 pandas==2.0.3
 plotly==5.18.0
 numpy==1.24.3
 
-# Supabase Client Stack
+# Supabase Stack (harmonized versions)
 supabase==2.3.1
 gotrue==2.12.0
 postgrest-py==0.10.6
-realtime-py==0.1.3  # Last available version that works with Python 3.11
+realtime-py==0.1.3
 
-# Supporting Utilities
+# Unified Dependencies
 python-dateutil==2.8.2
-httpx==0.24.1
+httpx==0.26.0  # Version that satisfies both supabase and gotrue
